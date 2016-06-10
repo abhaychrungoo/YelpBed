@@ -1,0 +1,32 @@
+control:
+  build: control/
+  volumes: 
+    - ./data:/data
+    - ./visualizations:/visualizations
+  links:
+    - indexer
+    - frontend
+    - ingester
+indexer:
+  build : indexer/
+  command: elasticsearch -Des.network.host=0.0.0.0
+  ports:
+    - "9200:9200"
+    - "9300:9300"
+ingester:
+  image: logstash:latest
+  command: logstash -f /etc/logstash/conf.d/logstash-tcp.conf
+  volumes:
+    - ./ingester/conf:/etc/logstash/conf.d
+  ports:
+    - "9100:9100"
+  links:
+    - indexer
+frontend:
+  build: frontend/
+  volumes:
+    - ./frontend/conf/:/opt/kibana/config/
+  ports:
+    - "5601:5601"
+  links:
+    - indexer
